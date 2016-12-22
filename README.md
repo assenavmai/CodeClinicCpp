@@ -1,8 +1,8 @@
 # Code Clinics for C++
 
 ## Table of Contents (6 problems in total, will update when a project is started)
-[What Are Code Clinics](#what-are-code-clinics)
-[Problem 1: Exploring Lake Pend Orielle](#problem-1-exploring-lake-pend-orielle)
+* [What Are Code Clinics](#what-are-code-clinics)
+* [Problem 1: Exploring Lake Pend Orielle](#problem-1-exploring-lake-pend-orielle)
 
 
 ### What are Code Clinics?
