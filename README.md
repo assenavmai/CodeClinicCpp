@@ -1,13 +1,9 @@
 # Code Clinics for C++
 
-## Table of Contents
+## Table of Contents (6 problems in total, will update when a project is started)
 [What Are Code Clinics](#what-are-code-clinics)
-[Problem 1: Exploring Lake Pend Orielle]
-[Problem 2: Image Analysis]
-[Problem 3: Eight Queens]
-[Problem 4: Accessing Peripherals]
-[Problem 5]: Recursion and Directories
-[Problem 6]: Building the Web
+[Problem 1: Exploring Lake Pend Orielle](#problem-1-exploring-lake-pend-orielle)
+
 
 ### What are Code Clinics?
 
