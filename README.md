@@ -17,6 +17,8 @@ This month, we'll work on a problem in statistical analysis and, to some extent,
 
 As part of that testing, the U.S. Navy compiles an exhaustive list of weather statistics, wind speed, air temperature, barometric pressure. You can browse this data by pointing your web browser at lpo.dt.navy.mil. You'll find several weather summaries, webcam, and the raw data they collect every five minutes archived as standard text files. For anyone living or working on Lake Pend Oreille, weather statistics are an important part of everyday life. Average wind speed can be very different than median wind speed, especially if you're on a small boat in the middle of the lake.
 
+**NOTE:** The website [http://lpo.dt.navy.mil/]() has now gone offline. You can access the data from this [repository](https://github.com/lyndadotcom/LPO_weatherdata) to access the data statically instead of making an HTTP call.
+
 
 #### Problem at Hand
 
@@ -44,7 +46,7 @@ First, let's briefly review mean and median. These are both statistics.Here we h
     2014_01_01 01:35:55 4
     2014_01_01 01:42:03 8
 
-*You can see the data at [http://lpo.dt.navy.mil/data/DM/2014/2014_01_01/Wind_Gus]()*. 
+
 
 These is what you can cather from these readings:
 	* The first column is the day the wind gust was recorded.
