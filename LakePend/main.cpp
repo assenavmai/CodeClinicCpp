@@ -31,7 +31,9 @@ int main(int argc, char const *argv[])
 
 	windGust = airTemp = baroPress = 0.0;
 
-	try
+	Date d("2013_01_01", '_');
+
+	/*try
 	{
 		fp.open("./test", ios::in);
 		
@@ -57,7 +59,7 @@ int main(int argc, char const *argv[])
 
 	}
 
-	printf("%lf %lf %lf\n", airTemp, baroPress, windGust);
+	printf("%lf %lf %lf\n", airTemp, baroPress, windGust);*/
 
 	return 0;
 }
