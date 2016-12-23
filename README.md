@@ -87,10 +87,3 @@ and the resulting JSON data looks like this:
          "barometricPressure":[{"mean":29.781441048,"median":29.8}]
     }
 
-So, this is our first challenge. Pull statistics from a data set available online. Perhaps you'll want to pause and create a solution of your own. How would you solve the problem? In the next videos, I'll show you how I solve this challenge. 
-
-
-
-
-
-
