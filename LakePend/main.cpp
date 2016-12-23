@@ -7,6 +7,10 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <string>
+#include <sstream>
+#include <vector>
+#include "Date.h"
 #include "LPOData.h"
 #include "FileException.h"
 
@@ -19,8 +23,11 @@ const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_
 int main(int argc, char const *argv[])
 {
 	ifstream fp;
+	stringstream ss;
 	double windGust, airTemp, baroPress;
-	string line;
+	string line, dataItem;
+	vector<LPOData> lpoVector;
+
 
 	windGust = airTemp = baroPress = 0.0;
 
@@ -43,7 +50,10 @@ int main(int argc, char const *argv[])
 
 	while(getline(fp, line))
 	{
-		cout << line << endl;
+		ss.str(line);
+		
+		getline(ss, dataItem, ' ');
+		cout << dataItem << endl;
 
 	}
 
