@@ -25,15 +25,14 @@ int main(int argc, char const *argv[])
 	ifstream fp;
 	stringstream ss;
 	double windGust, airTemp, baroPress;
-	string line, dataItem;
+	string line, dataItem, temp;
 	vector<LPOData> lpoVector;
 
 
 	windGust = airTemp = baroPress = 0.0;
 
-	Date d("2013_01_01", '_');
 
-	/*try
+	try
 	{
 		fp.open("./test", ios::in);
 		
@@ -53,13 +52,30 @@ int main(int argc, char const *argv[])
 	while(getline(fp, line))
 	{
 		ss.str(line);
-		
 		getline(ss, dataItem, ' ');
-		cout << dataItem << endl;
+		Date date(dataItem, '_');
+
+		for(int i = 0; i < 8; i++)
+		{
+			getline(ss, dataItem, '\t');
+
+			if(i == 1)
+			{
+				airTemp = stod(dataItem);
+			}
+			else if(i == 2)
+			{
+				baroPress = stod(dataItem);
+			}
+			else if(i == 6)
+			{
+				windGust = stod(dataItem);
+			}
+		}
 
 	}
 
-	printf("%lf %lf %lf\n", airTemp, baroPress, windGust);*/
+	printf("%lf %lf %lf\n", airTemp, baroPress, windGust);
 
 	return 0;
 }
