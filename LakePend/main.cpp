@@ -18,23 +18,26 @@ using namespace std;
 
 const FileException e_file("File could not be opened.");
 
-const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2012.txt";
+const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
 
 int main(int argc, char const *argv[])
 {
+	//Declaration of variables
 	ifstream fp;
 	stringstream ss;
 	double windGust, airTemp, baroPress;
 	string line, dataItem, temp;
+	LPOData lpo;
 	vector<LPOData> lpoVector;
 
 
-	windGust = airTemp = baroPress = 0.0;
+	windGust = airTemp = baroPress = 0.0; //init
 
 
+	//open the file
 	try
 	{
-		fp.open("./test", ios::in);
+		fp.open(file, ios::in);
 		
 		if(!fp.is_open())
 		{
@@ -47,10 +50,12 @@ int main(int argc, char const *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	getline(fp, line);
+	getline(fp, line); // disregard the first line of the file
 
+	//Loop through the file and parse and store the values into the class object, then into a vector
 	while(getline(fp, line))
 	{
+		//Date not being used right now
 		ss.str(line);
 		getline(ss, dataItem, ' ');
 		Date date(dataItem, '_');
@@ -61,21 +66,20 @@ int main(int argc, char const *argv[])
 
 			if(i == 1)
 			{
-				airTemp = stod(dataItem);
+				lpo.setAirTemp(stod(dataItem));
 			}
 			else if(i == 2)
 			{
-				baroPress = stod(dataItem);
+				lpo.setBaroPressure(stod(dataItem));
 			}
 			else if(i == 6)
 			{
-				windGust = stod(dataItem);
+				lpo.setWindGust(stod(dataItem));
 			}
 		}
 
+		lpoVector.push_back(lpo);
 	}
-
-	printf("%lf %lf %lf\n", airTemp, baroPress, windGust);
 
 	return 0;
 }

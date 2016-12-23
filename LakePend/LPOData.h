@@ -7,7 +7,9 @@ class LPOData {
 	double wind, air, baro;
 	Date dateRecorded;
 public:
+	LPOData();
 	LPOData(double, double, double);
+	LPOData(double, double, double, Date);
 	~LPOData();
 	void setAirTemp(double at);
 	void setBaroPressure(double bp);
@@ -17,11 +19,25 @@ public:
 	double getWindGust();
 };
 
+LPOData::LPOData() {
+	air = 0.0;
+	baro = 0.0;
+	wind = 0.0;
+}
+
 LPOData::LPOData(double at, double bp, double wg) {
 
 	air = at;
 	baro = bp;
 	wind = wg;
+}
+
+LPOData::LPOData(double at, double bp, double wg, Date date) {
+
+	air = at;
+	baro = bp;
+	wind = wg;
+	dateRecorded = date;
 }
 
 LPOData::~LPOData() {}
