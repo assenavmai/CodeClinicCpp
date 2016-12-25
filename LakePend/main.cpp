@@ -1,15 +1,22 @@
-/** Author: Vanessa White
-	Program: Statistical Analysis - Lake Pend
-	Date: December 22nd, 2016
-**/
-
-#include <cstdio>
-#include <fstream>
+/* Standard C++ includes */
+#include <stdlib.h>
 #include <iostream>
-#include <cstdlib>
-#include <string>
-#include <sstream>
+#include <fstream>
 #include <vector>
+#include <sstream>
+
+/*
+  Include directly the different
+  headers from cppconn/ and mysql_driver.h + mysql_util.h
+  (and mysql_connection.h). This will reduce your build time!
+*/
+#include "mysql_connection.h"
+
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
 #include "Date.h"
 #include "LPOData.h"
 #include "FileException.h"
@@ -17,94 +24,107 @@
 using namespace std;
 
 const FileException e_file("File could not be opened.");
-
 const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
 
-double calculateMean(double total, int numElements);
 
-int main(int argc, char const *argv[])
+int main(void)
 {
-	//Declaration of variables
-	ifstream fp;
-	string line, dataItem, temp;
-	LPOData lpo;
-	vector<LPOData> lpoVector;
-	double meanAir, meanBaro, meanWind;
 
-	meanAir = meanBaro = meanWind = 0.0;
+    ifstream fp;
+    string line, dataItem, date, time;
+    double airTemp, baroPress, /*dew, relHumid, windDir,*/ windGust/*, windSpeed*/;
 
-
-	//open the file
-	try
-	{
-		fp.open(file, ios::in);
-		
-		if(!fp.is_open())
-		{
-			throw e_file;
-		}
-	}
-	catch(FileException &e)
-	{
-		cout << "Error: " << e.what() << endl;
-		exit(EXIT_FAILURE);
-	}
-
-	getline(fp, line); // disregard the first line of the file
-
-	//Loop through the file and parse and store the values into the class object, then into a vector
-	while(getline(fp, line))
-	{
-		//cout << "get line" << line << endl;
-		//Date not being used right now
-		stringstream ss(line);
-		getline(ss, dataItem, '\t');
-		Date date(dataItem, '_');
-
-		for(int i = 0; i < 8; i++)
-		{
-			getline(ss, dataItem, '\t');
-			//cout << "ok " <<  i << dataItem << endl; 
-
-			if(i == 1)
-			{
-				lpo.setAirTemp(stod(dataItem));
-				//cout << "air " << dataItem << endl;
-			}
-			else if(i == 2)
-			{
-				lpo.setBaroPressure(stod(dataItem));
-				//cout << "baro " << dataItem << endl;
-			}
-			else if(i == 5)
-			{
-				lpo.setWindGust(stod(dataItem));
-				//cout << "wind " << i << dataItem << endl;
-			}
-		}
-
-		lpoVector.push_back(lpo);
-	}
-
-	//cout << (int)lpoVector.size() << endl;
-	for(int i = 0; i < (int)lpoVector.size(); ++i)
-	{
-		meanAir += lpoVector.at(i).getAirTemp();
-		meanBaro += lpoVector.at(i).getBaroPressure();
-		meanWind += lpoVector.at(i).getWindGust();
-	}
-
-	meanWind = calculateMean(meanWind, (int)lpoVector.size());
-	meanBaro = calculateMean(meanBaro, (int)lpoVector.size());
-	meanAir = calculateMean(meanAir, (int)lpoVector.size());
-
-	printf("%lf %lf %lf\n", meanAir, meanBaro, meanWind);
+    /*cout << endl;
+    cout << "Running 'SELECT 'Hello World!' » \
+    AS _message'..." << endl;*/
 
 
-	return 0;
-}
+   //open the file
+    try
+    {
+        fp.open("test", ios::in);
 
-double calculateMean(double total, int numElements) {
+        if(!fp.is_open())
+        {
+            throw e_file;
+        }
+    }
+    catch(FileException &e)
+    {
+        cout << "Error: " << e.what() << endl;
+        exit(EXIT_FAILURE);
+    }
 
-	return (total / numElements);
+    try 
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::Statement *stmt;
+        sql::ResultSet *res;
+
+        /* Create a connection */
+        driver = get_driver_instance();
+
+        con = driver->connect("tcp://127.0.0.1:3306", "root", password);
+        /* Connect to the MySQL lpo_data database */
+        con->setSchema(table);
+
+        //Loop through the file and parse and store the values into the class object, then into a vector
+        getline(fp, line); // disregard the first line of the file
+        cout << line << endl;
+
+        while(getline(fp, line))
+        {
+            stringstream ss(line);
+            stringstream querySS;
+            getline(ss, dataItem, ' ');
+            Date date(dataItem, '_');
+
+            for(int i = 0; i < 8; i++)
+            {
+                getline(ss, dataItem, '\t');
+
+                if(i == 1)
+                {
+                    airTemp = stod(dataItem);
+                }
+                else if(i == 2)
+                {
+                    baroPress = stod(dataItem);
+                }
+                else if(i == 6)
+                {
+                    windGust = stod(dataItem);
+                }
+            }
+
+            cout << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
+                << "," << windGust << ")";
+
+            querySS << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
+                << "," << windGust << ")";
+
+            stmt = con->createStatement();
+            stmt->execute(querySS.str());
+
+            delete stmt;
+        }
+
+        fp.close();
+        delete con;
+
+    } 
+    catch (sql::SQLException &e) 
+    {
+        cout << "# ERR: SQLException in " << __FILE__;
+        cout << "(" << __FUNCTION__ << ") on line  » "\
+        << __LINE__ << endl;
+        cout << "# ERR: " << e.what();
+        cout << " (MySQL error code: " << e.getErrorCode();
+        cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+    }
+
+    cout << endl;
+
+    return EXIT_SUCCESS;
 }

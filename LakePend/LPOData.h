@@ -11,12 +11,19 @@ public:
 	LPOData(double, double, double);
 	LPOData(double, double, double, Date);
 	~LPOData();
+
 	void setAirTemp(double at);
 	void setBaroPressure(double bp);
 	void setWindGust(double wg);
+
 	double getAirTemp();
 	double getBaroPressure();
 	double getWindGust();
+
+	/*bool sortByAirTemp(LPOData &lhs, LPOData &rhs);
+	bool sortByBaroPressure(LPOData &lhs, LPOData &rhs);
+	bool sortByWindGust(LPOData &lhs, LPOData &rhs);*/
+
 };
 
 LPOData::LPOData() {
@@ -66,4 +73,14 @@ double LPOData::getWindGust() {
 	return wind;
 }
 
+/*bool LPOData::sortByAirTemp(LPOData &lhs, LPOData &rhs) {
+	return lhs.getAirTemp() < rhs.getAirTemp();
+}
+
+bool LPOData::sortByBaroPressure(LPOData &lhs, LPOData &rhs) {
+	return lhs.getBaroPressure() < rhs.getBaroPressure();
+}
+bool LPOData::sortByWindGust(LPOData &lhs, LPOData &rhs) {
+	return lhs.getWindGust() < rhs.getWindGust();
+}*/
 #endif
