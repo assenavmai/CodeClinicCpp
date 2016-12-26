@@ -23,7 +23,9 @@
 
 using namespace std;
 
-const FileException e_file("File could not be opened.");
+const FileException in_file("File could not be opened for reading.");
+const FileException out_file("File could not be opened for writing.");
+
 const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
 
 
@@ -31,6 +33,7 @@ int main(void)
 {
 
     ifstream fp;
+    ofstream out;
     string line, dataItem, date, time;
     double airTemp, baroPress, /*dew, relHumid, windDir,*/ windGust/*, windSpeed*/;
 
@@ -46,7 +49,7 @@ int main(void)
 
         if(!fp.is_open())
         {
-            throw e_file;
+            throw in_file;
         }
     }
     catch(FileException &e)
@@ -65,9 +68,25 @@ int main(void)
         /* Create a connection */
         driver = get_driver_instance();
 
-        con = driver->connect("tcp://127.0.0.1:3306", "root", password);
+        con = driver->connect("tcp://127.0.0.1:3306", "@@USER@@", "@@PASSWORD@@");
         /* Connect to the MySQL lpo_data database */
-        con->setSchema(table);
+        con->setSchema(@@DATABASE@@);
+
+        //open the file
+	    try
+	    {
+	        out.open("outfile", ios::out);
+
+	        if(!out.is_open())
+	        {
+	            throw out_file;
+	        }
+	    }
+	    catch(FileException &e)
+	    {
+	        cout << "Error: " << e.what() << endl;
+	        exit(EXIT_FAILURE);
+	    }
 
         //Loop through the file and parse and store the values into the class object, then into a vector
         getline(fp, line); // disregard the first line of the file
@@ -76,7 +95,6 @@ int main(void)
         while(getline(fp, line))
         {
             stringstream ss(line);
-            stringstream querySS;
             getline(ss, dataItem, ' ');
             Date date(dataItem, '_');
 
@@ -98,7 +116,11 @@ int main(void)
                 }
             }
 
-            cout << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
+		    out << airTemp << '\t' << baroPress << '\t' << windGust << '\n';
+
+
+
+           /* cout << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
                 << "," << windGust << ")";
 
             querySS << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
@@ -107,10 +129,15 @@ int main(void)
             stmt = con->createStatement();
             stmt->execute(querySS.str());
 
-            delete stmt;
+            delete stmt;*/
         }
+        
+        stmt = con->createStatement();
+            stmt->execute(querySS.str());
 
+        out.close();
         fp.close();
+        delete stmt;
         delete con;
 
     } 
