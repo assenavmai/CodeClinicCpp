@@ -18,22 +18,30 @@
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 
-#include "Date.h"
-#include "LPOData.h"
+#include "file_process.h"
 #include "FileException.h"
 
 using namespace std;
 
-void openOutFile(string filename, ofstream &outfile);
-void openInFile(string filename, ifstream &infile);
-void processFile(ifstream &in, ofstream &out);
-
-const FileException in_file("File could not be opened for reading.");
-const FileException out_file("File could not be opened for writing.");
-
 const char * file = "~/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
 
+bool sortFunc(double i, double j) {
+	return i < j;
+}
 
+double calculateMedian(vector<double> v) {
+
+    sort(v.begin(), v.end(), sortFunc);
+
+	if(v.size() % 2 == 0)
+	{
+		return (v[(v.size() / 2) - 1] + v[v.size() / 2]) / 2;
+	}
+	else
+	{
+		return v[v.size() / 2];
+	}
+}
 
 int main(void)
 {
@@ -41,10 +49,12 @@ int main(void)
     ifstream fp;
     ofstream out;
     stringstream query;
-    double meanAir, meanBaro, meanGust;
+    double meanAir, meanBaro, meanGust, medAir, medBaro, medGust;
+    vector<double> vctAir, vctBaro, vctGust;
     string line, dataItem, date, time;
     string pythonFile = "~/Documents/CodeClinicCpp/LakePend/loadFile.py";
 	string command = "python ";
+
 
     openInFile("test", fp);
     openOutFile("outfile", out);
@@ -54,7 +64,7 @@ int main(void)
 
     command += pythonFile;
 
-    system(command.c_str());
+    //system(command.c_str());
 
 
     try 
@@ -83,12 +93,22 @@ int main(void)
 		    meanAir = res->getDouble("_mean_air");
 		    meanBaro = res->getDouble("_mean_baro");
 		    meanGust = res->getDouble("_mean_gust");
-		    //cout << "\t... MySQL says it again: ";
-		    /* Access column data by numeric offset, 1 is the first column */
-		    //cout << res->getString(1) << endl;
   		}
   		
   		delete res;
+		delete stmt;
+
+		stmt = con-> createStatement();
+		res = stmt->executeQuery("SELECT * FROM file_data");
+
+		while(res->next())
+		{
+			vctAir.push_back(res->getDouble("air_temp"));
+			vctBaro.push_back(res->getDouble("baro_pressure"));
+			vctGust.push_back(res->getDouble("wind_gust"));
+		}
+		
+		delete res;
 		delete stmt;
         delete con;
 
@@ -106,77 +126,14 @@ int main(void)
     cout << fixed;
     cout << setprecision(3);
     cout << meanAir << " " << meanBaro << " " << meanGust << endl;
+
+    medAir = calculateMedian(vctAir);
+    medBaro = calculateMedian(vctBaro);
+    medGust = calculateMedian(vctGust);
+    cout << medAir << " " << medBaro << " " << medGust << endl;
+
+
+
     return EXIT_SUCCESS;
 }
 
-void openInFile(string filename, ifstream &infile) {
-
-    try
-    {
-        infile.open(filename, ios::in);
-
-        if(!infile.is_open())
-        {
-            throw in_file;
-        }
-    }
-    catch(FileException &e)
-    {
-        cout << "Error: " << e.what() << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void openOutFile(string filename, ofstream &outfile) {
-
-    try
-    {
-        outfile.open(filename, ios::out);
-
-        if(!outfile.is_open())
-        {
-            throw out_file;
-        }
-    }
-    catch(FileException &e)
-    {
-        cout << "Error: " << e.what() << endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void processFile(ifstream &in, ofstream &out) {
-
-	string line, dataItem;
-	double airTemp, baroPress, windGust;
-
-	//Loop through the file and parse and store the values into the class object, then into a vector
-    getline(in, line); // disregard the first line of the file
-    cout << line << endl;
-
-    while(getline(in, line))
-    {
-        stringstream ss(line);
-        getline(ss, dataItem, ' ');
-
-        for(int i = 0; i < 8; i++)
-        {
-            getline(ss, dataItem, '\t');
-
-            if(i == 1)
-            {
-                airTemp = stod(dataItem);
-            }
-            else if(i == 2)
-            {
-                baroPress = stod(dataItem);
-            }
-            else if(i == 6)
-            {
-                windGust = stod(dataItem);
-            }
-        }
-
-	    out << airTemp << '\t' << baroPress << '\t' << windGust << '\n';
-    }
-}
