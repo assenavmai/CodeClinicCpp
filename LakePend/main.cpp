@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <iomanip>
 
 /*
   Include directly the different
@@ -23,10 +24,15 @@
 
 using namespace std;
 
+void openOutFile(string filename, ofstream &outfile);
+void openInFile(string filename, ifstream &infile);
+void processFile(ifstream &in, ofstream &out);
+
 const FileException in_file("File could not be opened for reading.");
 const FileException out_file("File could not be opened for writing.");
 
-const char * file = "/home/vanessa/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
+const char * file = "~/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
+
 
 
 int main(void)
@@ -34,29 +40,22 @@ int main(void)
 
     ifstream fp;
     ofstream out;
+    stringstream query;
+    double meanAir, meanBaro, meanGust;
     string line, dataItem, date, time;
-    double airTemp, baroPress, /*dew, relHumid, windDir,*/ windGust/*, windSpeed*/;
+    string pythonFile = "~/Documents/CodeClinicCpp/LakePend/loadFile.py";
+	string command = "python ";
 
-    /*cout << endl;
-    cout << "Running 'SELECT 'Hello World!' » \
-    AS _message'..." << endl;*/
+    openInFile("test", fp);
+    openOutFile("outfile", out);
+    processFile(fp, out);
+    out.close();
+    fp.close();
 
+    command += pythonFile;
 
-   //open the file
-    try
-    {
-        fp.open("test", ios::in);
+    system(command.c_str());
 
-        if(!fp.is_open())
-        {
-            throw in_file;
-        }
-    }
-    catch(FileException &e)
-    {
-        cout << "Error: " << e.what() << endl;
-        exit(EXIT_FAILURE);
-    }
 
     try 
     {
@@ -68,76 +67,29 @@ int main(void)
         /* Create a connection */
         driver = get_driver_instance();
 
-        con = driver->connect("tcp://127.0.0.1:3306", "@@USER@@", "@@PASSWORD@@");
+        con = driver->connect("tcp://127.0.0.1:3306", "", "");
         /* Connect to the MySQL lpo_data database */
-        con->setSchema(@@DATABASE@@);
+        con->setSchema("");
 
-        //open the file
-	    try
-	    {
-	        out.open("outfile", ios::out);
+       	stmt = con->createStatement();
+       	query << "SELECT AVG(air_temp) AS _mean_air, AVG(baro_pressure) as _mean_baro, \
+        	AVG(wind_gust) AS _mean_gust FROM file_data";
+        res = stmt->executeQuery(query.str());
 
-	        if(!out.is_open())
-	        {
-	            throw out_file;
-	        }
-	    }
-	    catch(FileException &e)
-	    {
-	        cout << "Error: " << e.what() << endl;
-	        exit(EXIT_FAILURE);
-	    }
-
-        //Loop through the file and parse and store the values into the class object, then into a vector
-        getline(fp, line); // disregard the first line of the file
-        cout << line << endl;
-
-        while(getline(fp, line))
+        while (res->next()) 
         {
-            stringstream ss(line);
-            getline(ss, dataItem, ' ');
-            Date date(dataItem, '_');
-
-            for(int i = 0; i < 8; i++)
-            {
-                getline(ss, dataItem, '\t');
-
-                if(i == 1)
-                {
-                    airTemp = stod(dataItem);
-                }
-                else if(i == 2)
-                {
-                    baroPress = stod(dataItem);
-                }
-                else if(i == 6)
-                {
-                    windGust = stod(dataItem);
-                }
-            }
-
-		    out << airTemp << '\t' << baroPress << '\t' << windGust << '\n';
-
-
-
-           /* cout << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
-                << "," << windGust << ")";
-
-            querySS << "INSERT INTO file_data (air_temp, baro_pressure, wind_gust) VALUES(" << airTemp << "," << baroPress \
-                << "," << windGust << ")";
-
-            stmt = con->createStatement();
-            stmt->execute(querySS.str());
-
-            delete stmt;*/
-        }
-        
-        stmt = con->createStatement();
-            stmt->execute(querySS.str());
-
-        out.close();
-        fp.close();
-        delete stmt;
+		    cout << "\t... MySQL replies: ";
+		    /* Access column data by alias or column name */
+		    meanAir = res->getDouble("_mean_air");
+		    meanBaro = res->getDouble("_mean_baro");
+		    meanGust = res->getDouble("_mean_gust");
+		    //cout << "\t... MySQL says it again: ";
+		    /* Access column data by numeric offset, 1 is the first column */
+		    //cout << res->getString(1) << endl;
+  		}
+  		
+  		delete res;
+		delete stmt;
         delete con;
 
     } 
@@ -151,7 +103,80 @@ int main(void)
         cout << ", SQLState: " << e.getSQLState() << " )" << endl;
     }
 
-    cout << endl;
-
+    cout << fixed;
+    cout << setprecision(3);
+    cout << meanAir << " " << meanBaro << " " << meanGust << endl;
     return EXIT_SUCCESS;
+}
+
+void openInFile(string filename, ifstream &infile) {
+
+    try
+    {
+        infile.open(filename, ios::in);
+
+        if(!infile.is_open())
+        {
+            throw in_file;
+        }
+    }
+    catch(FileException &e)
+    {
+        cout << "Error: " << e.what() << endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+void openOutFile(string filename, ofstream &outfile) {
+
+    try
+    {
+        outfile.open(filename, ios::out);
+
+        if(!outfile.is_open())
+        {
+            throw out_file;
+        }
+    }
+    catch(FileException &e)
+    {
+        cout << "Error: " << e.what() << endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+void processFile(ifstream &in, ofstream &out) {
+
+	string line, dataItem;
+	double airTemp, baroPress, windGust;
+
+	//Loop through the file and parse and store the values into the class object, then into a vector
+    getline(in, line); // disregard the first line of the file
+    cout << line << endl;
+
+    while(getline(in, line))
+    {
+        stringstream ss(line);
+        getline(ss, dataItem, ' ');
+
+        for(int i = 0; i < 8; i++)
+        {
+            getline(ss, dataItem, '\t');
+
+            if(i == 1)
+            {
+                airTemp = stod(dataItem);
+            }
+            else if(i == 2)
+            {
+                baroPress = stod(dataItem);
+            }
+            else if(i == 6)
+            {
+                windGust = stod(dataItem);
+            }
+        }
+
+	    out << airTemp << '\t' << baroPress << '\t' << windGust << '\n';
+    }
 }
