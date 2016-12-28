@@ -49,9 +49,9 @@ First, let's briefly review mean and median. These are both statistics.Here we h
 
 
 These is what you can cather from these readings:
-	* The first column is the day the wind gust was recorded.
-	* The second column is the time it was recorded.
- 	* The third column is the wind gust in miles per hour. 
+* The first column is the day the wind gust was recorded.
+* The second column is the time it was recorded.
+ * The third column is the wind gust in miles per hour. 
  
  The mean is also known as the average. To collect the mean of a range of numbers, simply add the values in the set, then divide by the number of values. 
  
@@ -62,9 +62,9 @@ These is what you can cather from these readings:
 The median is the number halfway between all the values in a sorted range of values. 
 
 To calculate the median:
-	1. Sort the numbers from lowest to highest. 
-		* If there's an odd number of values, then just take the middle number. 
-		* If there's an even number of values, then calculate the mean of the central two numbers.
+1. Sort the numbers from lowest to highest. 
+* If there's an odd number of values, then just take the middle number. 
+* If there's an even number of values, then calculate the mean of the central two numbers.
 
 In this case, there's an even number of values, so we sort, then we take the average of the middle two values, the 8 and 11, and the median is 9.5.
 
