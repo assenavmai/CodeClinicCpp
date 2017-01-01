@@ -1,4 +1,10 @@
-/* Standard C++ includes */
+/** \file main.cpp
+ * Contains the main contents of the program.
+ * Has the connection to the database, extracting data from the database, calculating the median, mean and 
+ * creating the JSON file.
+ */
+
+//<! Standard C++ includes
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -6,29 +12,36 @@
 #include <sstream>
 #include <iomanip>
 
-/*
-  Include directly the different
-  headers from cppconn/ and mysql_driver.h + mysql_util.h
-  (and mysql_connection.h). This will reduce your build time!
-*/
 #include "mysql_connection.h"
-
+#include "mysql_driver.h"
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 
+#include "json/json.h"
+
 #include "file_process.h"
 #include "FileException.h"
 
+/**\namespace std */
 using namespace std;
 
-const char * file = "~/Documents/LPO_weatherdata/Environmental_Data_Deep_Moor_2013.txt";
-
+/*! \fn bool sortFunc(double i, double j)
+ * \brief Helper function to sort a vector of doubles.
+ * \param i: a double.
+ * param j: a double
+ * \return true if i is less than j, otherwise false.
+ */
 bool sortFunc(double i, double j) {
 	return i < j;
 }
 
+/*! \fn double calculateMedian(vector<double> v)
+ * \brief Calculates the median of the values stored in a vector of doubles.
+ * \param v: a vector of type double.
+ * \return a double which represents the median.
+ */
 double calculateMedian(vector<double> v) {
 
     sort(v.begin(), v.end(), sortFunc);
@@ -43,29 +56,50 @@ double calculateMedian(vector<double> v) {
 	}
 }
 
+/*! \fn Json::Value createJsonStructure(double mean, double median, Json::Value arr)
+ * \brief Uses JSONCPP to create a JSON structure using the median and mean values.
+ * \param mean: a double.
+ * \param median: a double.
+ * \param arr: a Json::Value from the JSONCPP package
+ * \return a Json::Value
+ */
+Json::Value createJsonStructure(double mean, double median, Json::Value arr) {
+
+	Json::Value set;
+
+	set["arr"]["mean"] = mean;
+	set["arr"]["median"] = median;
+
+	arr.append(set["arr"]);
+
+	return arr;
+}
+
 int main(void)
 {
 
     ifstream fp;
-    ofstream out;
+    ofstream out, jsonData;
     stringstream query;
     double meanAir, meanBaro, meanGust, medAir, medBaro, medGust;
     vector<double> vctAir, vctBaro, vctGust;
     string line, dataItem, date, time;
-    string pythonFile = "~/Documents/CodeClinicCpp/LakePend/loadFile.py";
+	Json::Value buildJson, temp;
+	Json::Value arrWind, arrAir, arrBaro;
+	Json::StyledWriter styledWriter;
+
+	string pythonFile = "@@PYTHON@@"; //!< Location of the script where the file is loaded into the MySQL database
 	string command = "python ";
 
-
-    openInFile("test", fp);
+    openInFile(file, fp);
     openOutFile("outfile", out);
     processFile(fp, out);
     out.close();
     fp.close();
 
-    command += pythonFile;
+    command += pythonFile; //!< Concatenate the command
 
-    //system(command.c_str());
-
+    system(command.c_str()); //!< Runs the python script 
 
     try 
     {
@@ -74,25 +108,25 @@ int main(void)
         sql::Statement *stmt;
         sql::ResultSet *res;
 
-        /* Create a connection */
-        driver = get_driver_instance();
+        driver = get_driver_instance(); //!< Creates a connection
 
-        con = driver->connect("tcp://127.0.0.1:3306", "", "");
-        /* Connect to the MySQL lpo_data database */
-        con->setSchema("");
+        con = driver->connect("tcp://127.0.0.1:3306", "@@USER@@", "@@PASS@@");
+        con->setSchema("@@DB@@"); //!< Connects to the MySQL lpo_data database
+        
 
        	stmt = con->createStatement();
        	query << "SELECT AVG(air_temp) AS _mean_air, AVG(baro_pressure) as _mean_baro, \
         	AVG(wind_gust) AS _mean_gust FROM file_data";
         res = stmt->executeQuery(query.str());
 
+		cout << "\t... Calculating mean..." << endl;;
+
         while (res->next()) 
         {
-		    cout << "\t... MySQL replies: ";
-		    /* Access column data by alias or column name */
-		    meanAir = res->getDouble("_mean_air");
-		    meanBaro = res->getDouble("_mean_baro");
-		    meanGust = res->getDouble("_mean_gust");
+
+		    meanAir = res->getDouble("_mean_air"); //!< Access column data by alias
+		    meanBaro = res->getDouble("_mean_baro"); //!< Access column data by alias
+		    meanGust = res->getDouble("_mean_gust"); //!< Access column data by alias
   		}
   		
   		delete res;
@@ -100,6 +134,8 @@ int main(void)
 
 		stmt = con-> createStatement();
 		res = stmt->executeQuery("SELECT * FROM file_data");
+
+		cout << "\t... Getting values from table..." << endl;
 
 		while(res->next())
 		{
@@ -123,16 +159,28 @@ int main(void)
         cout << ", SQLState: " << e.getSQLState() << " )" << endl;
     }
 
-    cout << fixed;
-    cout << setprecision(3);
-    cout << meanAir << " " << meanBaro << " " << meanGust << endl;
 
+    cout << "\t... Calculating median..." << endl;
     medAir = calculateMedian(vctAir);
     medBaro = calculateMedian(vctBaro);
     medGust = calculateMedian(vctGust);
-    cout << medAir << " " << medBaro << " " << medGust << endl;
 
+    arrWind = createJsonStructure(meanGust, medGust, arrWind);
+    arrAir = createJsonStructure(meanAir, medAir, arrAir);
+    arrBaro = createJsonStructure(meanBaro, medBaro, arrBaro);
 
+	buildJson["barometricPressure"] = arrBaro;
+	buildJson["airTemperature"] = arrAir;
+	buildJson["windSpeed"] = arrWind;
+
+	openOutFile("returnData.json", jsonData);
+
+	jsonData << "var jsonReturnData = ";
+	jsonData << styledWriter.write(buildJson);
+
+	jsonData.close();
+
+	cout << "Program completed. JSON file created." << endl;
 
     return EXIT_SUCCESS;
 }
